@@ -17,8 +17,7 @@ A FastAPI service with a single endpoint, `POST /posting`, that validates a shor
 
 
 
-These platforms were chosen because each offers a free, documented REST API that a single token can use, with no OAuth redirect flow or app review, and each returns a URL for the published content. Platforms such as X, LinkedIn, Facebook, Instagram and Reddit were considered but left out. They need paid API access, an app review, an OAuth redirect flow or (for Instagram) an image.
-
+These platforms were chosen because each offers a free, documented REST API that a single token can use, with no OAuth redirect flow or app review, and each returns a URL for the published content.
 
 ## How it works
 
