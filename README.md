@@ -88,20 +88,10 @@ Do not commit .env
 
 
 ### Getting credentials
-| Platform | Steps | Variables |
 Each platform has Steps and variables menitoned in the .env.example
 
 
 
-## Running the server
-
-Easiest on this machine (auto-fixes a broken 3.15 venv):
-
-```powershell
-.\run.ps1
-```
-
-Or manually with the project’s Python 3.12 venv:
 
 ```bash
 .venv\Scripts\python -m uvicorn app.main:app --host 0.0.0.0 --port 4000
