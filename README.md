@@ -8,11 +8,11 @@ A FastAPI service with a single endpoint, `POST /posting`, that validates a shor
 
 | Platform | Published as | API endpoint | Authentication |
 
-| [Telegraph](https://telegra.ph/api) | A public page | `POST https://api.telegra.ph/createPage` | Access token, created automatically if not set |
-| [Mastodon](https://docs.joinmastodon.org/methods/statuses/#create) | A public status | `POST {instance}/api/v1/statuses` | Bearer access token |
-| [Bluesky](https://docs.bsky.app/docs/advanced-guides/posts) | A post with a clickable link | `POST /xrpc/com.atproto.repo.createRecord` | Handle and app password |
-| [GitHub Gist](https://docs.github.com/en/rest/gists/gists#create-a-gist) | A public gist | `POST https://api.github.com/gists` | Personal access token |
-| [Pastebin](https://pastebin.com/doc_api) | A public paste | `POST https://pastebin.com/api/api_post.php` | Developer API key |
+ - [Telegraph](https://telegra.ph/api) | A public page | `POST https://api.telegra.ph/createPage` | Access token, created automatically if not set 
+ - [Mastodon](https://docs.joinmastodon.org/methods/statuses/#create) | A public status | `POST {instance}/api/v1/statuses` | Bearer access token 
+ - [Bluesky](https://docs.bsky.app/docs/advanced-guides/posts) | A post with a clickable link | `POST /xrpc/com.atproto.repo.createRecord` | Handle and app password
+ - [GitHub Gist](https://docs.github.com/en/rest/gists/gists#create-a-gist) | A public gist | `POST https://api.github.com/gists` | Personal access token 
+ - [Pastebin](https://pastebin.com/doc_api) | A public paste | `POST https://pastebin.com/api/api_post.php` | Developer API key 
 
 
 
