@@ -168,6 +168,6 @@ python -m pytest
 
 The 50 tests never touch the network. API tests replace the platforms with fakes, and integration tests use `httpx.MockTransport`.
 
-Also includes a result file stored as Response_1.json
+The Response_1.json file contains a sample response from a demo test run.
 
 
