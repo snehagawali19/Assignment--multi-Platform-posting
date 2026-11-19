@@ -1,0 +1,55 @@
+{
+  "success": true,
+  "summary": {
+    "total": 5,
+    "succeeded": 5,
+    "failed": 0
+  },
+  "results": [
+    {
+      "platform": "Telegraph",
+      "status": "success",
+      "posted_url": "https://telegra.ph/Hey-everyone-11-19-4",
+      "public_access": true,
+      "date": "2026-11-19",
+      "time": "21:35:09",
+      "error": null
+    },
+    {
+      "platform": "Mastodon",
+      "status": "success",
+      "posted_url": "https://mastodon.social/@snehaa_g/117643955975848722",
+      "public_access": true,
+      "date": "2026-11-19",
+      "time": "21:35:08",
+      "error": null
+    },
+    {
+      "platform": "Bluesky",
+      "status": "success",
+      "posted_url": "https://bsky.app/profile/snehaag.bsky.social/post/3n2oh7fc4ym2f",
+      "public_access": true,
+      "date": "2026-11-19",
+      "time": "21:35:09",
+      "error": null
+    },
+    {
+      "platform": "GitHub Gist",
+      "status": "success",
+      "posted_url": "https://gist.github.com/snehagawali19/8218ed513617256cddc8293dbad6dddb",
+      "public_access": true,
+      "date": "2026-11-19",
+      "time": "21:35:09",
+      "error": null
+    },
+    {
+      "platform": "Pastebin",
+      "status": "success",
+      "posted_url": "https://pastebin.com/pKAfwubV",
+      "public_access": true,
+      "date": "2026-11-19",
+      "time": "21:35:08",
+      "error": null
+    }
+  ]
+}
