@@ -161,7 +161,6 @@ Then open these links in your browser:
 ## Error handling
 
 | Situation | Result for that platform |
-|---|---|
 | Credentials missing | `Not configured: set MASTODON_ACCESS_TOKEN in .env` (no request is sent) |
 | Rejected credentials (401/403) | `Authentication failed (HTTP 401): <platform message>` |
 | Rate limit (429) | `Rate limited by the platform (HTTP 429): <platform message>` |
