@@ -203,7 +203,7 @@ def test_one_failing_platform_does_not_stop_the_others(make_client):
     response = post_message(make_client([failing, FakePlatform("Beta")]), MESSAGE)
 
     body = response.json()
-    assert response.status_code == 200
+    assert response.status_code == 207
     assert body["success"] is True
     assert body["summary"] == {"total": 2, "succeeded": 1, "failed": 1}
     assert body["results"][0] == {
@@ -250,7 +250,7 @@ def test_success_is_false_when_every_platform_fails(make_client):
     response = post_message(make_client(platforms), MESSAGE)
 
     body = response.json()
-    assert response.status_code == 200
+    assert response.status_code == 502
     assert body["success"] is False
     assert body["summary"] == {"total": 2, "succeeded": 0, "failed": 2}
 
@@ -339,6 +339,7 @@ def test_telegraph_creates_an_account_then_a_page():
 
     assert published.url == "https://telegra.ph/Check-out-11-16"
     assert public is True
+    assert requests[0].url.host == "api.graph.org"
     form = parse_qs(requests[1].content.decode())
     assert form["access_token"] == ["tg-token"]
     assert form["title"] == ["Check out our latest business platform and grow your online visibility"]
@@ -348,6 +349,30 @@ def test_telegraph_creates_an_account_then_a_page():
         "attrs": {"href": "https://example.com"},
         "children": ["https://example.com"],
     }
+
+
+def test_telegraph_falls_back_when_graph_org_resets_the_connection():
+    hosts: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        hosts.append(request.url.host)
+        if request.url.host == "api.graph.org":
+            raise httpx.ConnectError("")
+        if request.url.path == "/createAccount":
+            return httpx.Response(200, json={"ok": True, "result": {"access_token": "tg-token"}})
+        if request.url.path == "/createPage":
+            page = {"path": "Check-out-11-16", "url": "https://telegra.ph/Check-out-11-16"}
+            return httpx.Response(200, json={"ok": True, "result": page})
+        if request.url.path == "/getPage/Check-out-11-16" and "access_token" not in request.url.params:
+            return httpx.Response(200, json={"ok": True, "result": {"path": "Check-out-11-16"}})
+        return httpx.Response(200, json={"ok": False, "error": "PAGE_NOT_FOUND"})
+
+    published, public = run_platform(TelegraphPlatform, handler)
+
+    assert hosts[0] == "api.graph.org"
+    assert "api.telegra.ph" in hosts
+    assert published.url == "https://telegra.ph/Check-out-11-16"
+    assert public is True
 
 
 def test_telegraph_api_errors_become_platform_errors():

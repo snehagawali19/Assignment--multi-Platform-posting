@@ -11,11 +11,14 @@ from typing import Any
 import httpx
 
 from app.config import Settings
-from app.platforms.base import Platform, PlatformError, PlatformPost, PublishedPost
+from app.platforms.base import Platform, PlatformError, PlatformPost, PublishedPost, Unreachable
 
 logger = logging.getLogger(__name__)
 
-API_URL = "https://api.telegra.ph"
+# graph.org is Telegraph's alternate domain. On some networks the TLS handshake to
+# api.telegra.ph is reset and telegra.ph itself never connects, while graph.org answers
+# and serves the same pages. api.telegra.ph remains the fallback.
+API_ROOTS = ("https://api.graph.org", "https://api.telegra.ph")
 
 
 class TelegraphPlatform(Platform):
@@ -27,6 +30,7 @@ class TelegraphPlatform(Platform):
         token = settings.telegraph_access_token
         self._access_token = token.get_secret_value() if token else None
         self._account_lock = asyncio.Lock()
+        self._api_root: str | None = None
 
     async def publish(self, post: PlatformPost) -> PublishedPost:
         access_token = await self._get_access_token()
@@ -41,7 +45,7 @@ class TelegraphPlatform(Platform):
                 "return_content": "false",
             },
         )
-        return PublishedPost(url=page["url"], check_url=f"{API_URL}/getPage/{page['path']}")
+        return PublishedPost(url=page["url"], check_url=f"{self._api_root}/getPage/{page['path']}")
 
     async def check_public_access(self, published: PublishedPost) -> bool:
         # Reads the page through the public API rather than telegra.ph itself, which some ISPs block.
@@ -59,13 +63,31 @@ class TelegraphPlatform(Platform):
                 logger.info("Created a Telegraph account for this run; set TELEGRAPH_ACCESS_TOKEN to reuse one account")
         return self._access_token
 
+    def _roots_to_try(self) -> tuple[str, ...]:
+        if self._api_root is None:
+            return API_ROOTS
+        return (self._api_root, *(root for root in API_ROOTS if root != self._api_root))
+
     async def _call(self, method: str, data: dict[str, str]) -> dict[str, Any]:
-        response = await self._request("POST", f"{API_URL}/{method}", data=data)
-        self._ensure_success(response, expected=(200,))
-        body = self._read_json(response)
-        if not body.get("ok"):
-            raise PlatformError(f"Telegraph {method} failed: {body.get('error', 'unknown error')}")
-        return body["result"]
+        # Only a failure to connect is retried on the other host. The request was never
+        # sent, so this cannot publish the same page twice.
+        failures: list[Unreachable] = []
+        for root in self._roots_to_try():
+            try:
+                response = await self._request("POST", f"{root}/{method}", data=data)
+            except Unreachable as exc:
+                failures.append(exc)
+                logger.warning("%s", exc)
+                if root == self._api_root:
+                    self._api_root = None
+                continue
+            self._api_root = root
+            self._ensure_success(response, expected=(200,))
+            body = self._read_json(response)
+            if not body.get("ok"):
+                raise PlatformError(f"Telegraph {method} failed: {body.get('error', 'unknown error')}")
+            return body["result"]
+        raise PlatformError("; ".join(str(failure) for failure in failures))
 
 
 def _paragraph_children(post: PlatformPost) -> list[Any]:

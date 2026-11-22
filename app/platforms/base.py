@@ -16,6 +16,10 @@ class PlatformError(Exception):
     """A publishing failure whose message is safe to return to API clients."""
 
 
+class Unreachable(PlatformError):
+    """The host never accepted a connection, so the request was not sent."""
+
+
 @dataclass(frozen=True)
 class PlatformPost:
     """The message as it should be published on one platform."""
@@ -83,15 +87,19 @@ class Platform(ABC):
         raise PlatformError(f"{setting} must be only the server address starting with https://, got {value!r}{hint}")
 
     async def _request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
+        host = httpx.URL(url).host
         try:
             return await self.client.request(method, url, **kwargs)
+        except httpx.ConnectTimeout:
+            raise Unreachable(f"Request to {host} timed out") from None
         except httpx.TimeoutException:
-            raise PlatformError(f"Request to {httpx.URL(url).host} timed out") from None
+            raise PlatformError(f"Request to {host} timed out") from None
+        except httpx.ConnectError as exc:
+            reason = str(exc) or "the connection was reset or refused"
+            raise Unreachable(f"Could not reach {host}: {reason}") from None
         except httpx.HTTPError as exc:
-            reason = str(exc) or (
-                "the connection was reset or refused" if isinstance(exc, httpx.ConnectError) else type(exc).__name__
-            )
-            raise PlatformError(f"Could not reach {httpx.URL(url).host}: {reason}") from None
+            reason = str(exc) or type(exc).__name__
+            raise PlatformError(f"Could not reach {host}: {reason}") from None
 
     def _ensure_success(self, response: httpx.Response, expected: tuple[int, ...] = (200, 201)) -> None:
         if response.status_code in expected:

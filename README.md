@@ -8,12 +8,20 @@ A FastAPI service with a single endpoint, `POST /posting`, that validates a shor
 
 | Platform | Published as | API endpoint | Authentication |
 
+
  - [Telegraph](https://telegra.ph/api) | A public page | `POST https://api.telegra.ph/createPage` | Access token, created automatically if not set 
  - [Mastodon](https://docs.joinmastodon.org/methods/statuses/#create) | A public status | `POST {instance}/api/v1/statuses` | Bearer access token 
  - [Bluesky](https://docs.bsky.app/docs/advanced-guides/posts) | A post with a clickable link | `POST /xrpc/com.atproto.repo.createRecord` | Handle and app password
  - [GitHub Gist](https://docs.github.com/en/rest/gists/gists#create-a-gist) | A public gist | `POST https://api.github.com/gists` | Personal access token 
  - [Pastebin](https://pastebin.com/doc_api) | A public paste | `POST https://pastebin.com/api/api_post.php` | Developer API key 
 
+
+
+| [Telegraph](https://telegra.ph/api) | A public page | `POST https://api.graph.org/createPage` (falls back to `api.telegra.ph`) | Access token, created automatically if not set |
+| [Mastodon](https://docs.joinmastodon.org/methods/statuses/#create) | A public status | `POST {instance}/api/v1/statuses` | Bearer access token |
+| [Bluesky](https://docs.bsky.app/docs/advanced-guides/posts) | A post with a clickable link | `POST /xrpc/com.atproto.repo.createRecord` | Handle and app password |
+| [GitHub Gist](https://docs.github.com/en/rest/gists/gists#create-a-gist) | A public gist | `POST https://api.github.com/gists` | Personal access token |
+| [Pastebin](https://pastebin.com/doc_api) | A public paste | `POST https://pastebin.com/api/api_post.php` | Developer API key |
 
 
 
@@ -32,13 +40,12 @@ These platforms were chosen because each offers a free, documented REST API that
 
 4. After a successful post, the service confirms public visibility with a request that sends **no credentials**:
 
-   | Platform | Public access check |
-   |---|---|
-   | Telegraph | `getPage` API without a token |
-   | Mastodon | Status `visibility` is `public` and `GET /api/v1/statuses/{id}` succeeds anonymously |
-   | Bluesky | The post is returned by the public AppView (`app.bsky.feed.getPosts`) |
-   | GitHub Gist | The gist was created as public and its page opens anonymously |
-   | Pastebin | The paste URL returned by the API opens anonymously |
+| Platform | Public access check |
+| Telegraph | `getPage` API without a token |
+| Mastodon | Status `visibility` is `public` and `GET /api/v1/statuses/{id}` succeeds anonymously |
+| Bluesky | The post is returned by the public AppView (`app.bsky.feed.getPosts`) |
+| GitHub Gist | The gist was created as public and its page opens anonymously |
+| Pastebin | The paste URL returned by the API opens anonymously |
 
 5. The response lists one result per platform, in a fixed order.
 
@@ -90,8 +97,6 @@ Do not commit .env
 Each platform has Steps and variables menitoned in the .env.example
 
 
-
-
 ```bash
 .venv\Scripts\python -m uvicorn app.main:app --host 0.0.0.0 --port 4000
 ```
@@ -103,7 +108,7 @@ Then open these links in your browser:
 | Link | What it is |
  http://localhost:4000/ | Redirects to the docs 
  http://localhost:4000/docs | Interactive API (Try it out → POST /posting) 
-http://localhost:4000/posting | API endpoint (POST only; use /docs or curl) 
+ http://localhost:4000/posting | API endpoint (POST only; use /docs or curl) 
 
 `--host 0.0.0.0` is what the assignment specifies. You still open the app as **localhost** on port **4000**.
 
@@ -119,7 +124,14 @@ http://localhost:4000/posting | API endpoint (POST only; use /docs or curl)
 }
 ```
 
+**Response status**
 
+| Status | When |
+|---|---|
+| 200 | Every platform published the message |
+| 207 | At least one platform published the message and at least one failed |
+| 422 | The message failed validation |
+| 502 | No platform published the message |
 
 ### Validation rules
 
@@ -166,7 +178,3 @@ python -m pytest
 ```
 
 The 50 tests never touch the network. API tests replace the platforms with fakes, and integration tests use `httpx.MockTransport`.
-
-The Response_1.json file contains a sample response from a demo test run.
-
-

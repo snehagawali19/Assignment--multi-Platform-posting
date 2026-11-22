@@ -49,7 +49,7 @@ app = FastAPI(
     title="Automated Multi-Platform Posting API",
     version="1.0.0",
     description=(
-        "Publishes a short message with one CTA link to each platorm"
+        "Publishes a short message with one CTA link to each platform"
         
     ),
     lifespan=lifespan,
@@ -84,13 +84,27 @@ def _field_error(error: dict[str, Any]) -> FieldError:
 @app.post(
     "/posting",
     response_model=PostingResponse,
-    responses={422: {"model": ErrorResponse, "description": "The message failed validation"}},
+    responses={
+        200: {"description": "Every platform published the message"},
+        207: {"model": PostingResponse, "description": "Some platforms published the message and some failed"},
+        422: {"model": ErrorResponse, "description": "The message failed validation"},
+        502: {"model": PostingResponse, "description": "Every platform failed"},
+    },
     summary="Publish a message to every supported platform",
     tags=["Posting"],
 )
 async def create_posting(
     payload: PostingRequest,
     service: Annotated[PostingService, Depends(get_posting_service)],
-) -> PostingResponse:
-    results = await service.publish(payload.parsed)
-    return PostingResponse.from_results(results)
+) -> JSONResponse:
+    body = PostingResponse.from_results(await service.publish(payload.parsed))
+    return JSONResponse(status_code=_posting_status(body), content=body.model_dump())
+
+
+def _posting_status(body: PostingResponse) -> int:
+    """200 when every platform succeeds, 207 when only some do, 502 when none do."""
+    if body.summary.succeeded == 0:
+        return status.HTTP_502_BAD_GATEWAY
+    if body.summary.failed:
+        return status.HTTP_207_MULTI_STATUS
+    return status.HTTP_200_OK
